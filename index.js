@@ -72,13 +72,32 @@ const config = require("./config.json");
     return child;
   };
 
+  const debugXPathasync = async (containerSelector) => {
+    const elementHandler = await page.waitForSelector(containerSelector, {
+      timeout: 30000,
+      visible: true,
+    });
+    console.log(await page.evaluate((el) => el.outerHTML, elementHandler));
+  };
+
+  // await debugXPathasync(
+  //   '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div)'
+  // );
+
   // Scroll the .scrollable div until the span is visible
 
-  const span3 = await scrollElementToChild(
-    '::-p-xpath(//span[text()="March"]/parent::div/parent::div/parent::div/parent::div/parent::div/parent::div/parent::div/parent::div/parent::div)',
-    '::-p-xpath(//span[text()="February"])'
-  );
-
+  // const span3 = await scrollElementToChild(
+  //   '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div)',
+  //   '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div/div/div/div/div/div/div/div[4])'
+  // );
+  const scrollUntil = async (monthIndex) => {
+    await scrollElementToChild(
+      '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div)',
+      '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div/div/div/div/div/div/div/div[' +
+        monthIndex +
+        "])"
+    );
+  };
   // const mainDiv = await page.$(
   //   '::-p-xpath(//span[text()="March"]/parent::div/parent::div/div[2]/div/div/div/div/img)'
   // );
@@ -86,22 +105,50 @@ const config = require("./config.json");
   // const imgSrc = await page.evaluate((el) => el.getAttribute("src"), mainDiv);
   // console.log(imgSrc);
 
-  require("fs").mkdirSync("archive/march", { recursive: true });
+  // const countMonthsAfter = await page.$$(
+  //   '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div/div/div/div/div/div/div/div)'
+  // );
 
-  const children = await page.$$eval(
-    '::-p-xpath(//span[text()="March"]/parent::div/parent::div/div[2]/div/div/div/div/img)',
-    (els) => els.map((el) => el.getAttribute("src"))
-  );
-  let counter = 0;
-  for (let index = 0; index < children.length; index++) {
-    const src = children[index];
-    require("fs").writeFileSync(
-      "archive/march/" + counter + ".jpg",
-      Buffer.from(await (await fetch(src)).arrayBuffer())
+  // console.log("months after: ", countMonthsAfter.length);
+  let pictureCount = 0;
+
+  const saveChildren = async (monthIndex) => {
+    const children = await page.$$eval(
+      '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div/div/div/div/div/div/div/div[' +
+        monthIndex +
+        "]/div[2]/div/div/div/div/img)",
+      (els) => els.map((el) => el.getAttribute("src"))
     );
-    counter++;
+    const mName = await page.$eval(
+      '::-p-xpath(//span[text()="Media, files and links"]/../../../../../div[3]/div/div/div/div/div/div/div/div/div/div/div/div[' +
+        monthIndex +
+        "]/div[1]/span)",
+      (el) => {
+        let name = el.textContent.toLowerCase().replaceAll(" ", "_");
+
+        return name.includes("_") ? name : name + "_2025";
+      }
+    );
+
+    require("fs").mkdirSync("archive/" + mName, { recursive: true });
+    let counter = 1;
+    for (let index = children.length - 1; index >= 0; index--) {
+      const src = children[index];
+      require("fs").writeFileSync(
+        "archive/" + mName + "/" + counter + ".jpg",
+        Buffer.from(await (await fetch(src)).arrayBuffer())
+      );
+      counter++;
+    }
+    console.log(mName + ":", children.length);
+    pictureCount += children.length;
+  };
+
+  for (let i = 1; i < 25; i++) {
+    await scrollUntil(i + 1);
+    await saveChildren(i);
   }
-  console.log("children:", children);
+  console.log("total count:", pictureCount);
 
   //await page.close();
   await browser.disconnect();

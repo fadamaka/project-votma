@@ -1,0 +1,25 @@
+march_2025: 346
+february_2025: 315
+january_2025: 382
+december_2024: 373
+november_2024: 366
+october_2024: 545
+september_2024: 527
+august_2024: 486
+july_2024: 514
+june_2024: 446
+may_2024: 496
+april_2024: 472
+march_2024: 402
+february_2024: 388
+january_2024: 539
+december_2023: 417
+november_2023: 307
+october_2023: 357
+september_2023: 404
+august_2023: 307
+july_2023: 419
+june_2023: 563
+may_2023: 583
+april_2023: 449
+total count: 10403
